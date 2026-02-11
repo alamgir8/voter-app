@@ -43,7 +43,7 @@ export default function HomeScreen() {
         }
       >
         {/* Header */}
-        <View className="bg-primary-500 px-5 pt-4 pb-8 rounded-b-3xl">
+        <View className="bg-blue-500 px-5 pt-4 pb-8 rounded-b-3xl">
           <View className="flex-row items-center justify-between mb-6">
             <View>
               <Text className="text-white/80 text-sm">স্বাগতম 👋</Text>
@@ -86,7 +86,7 @@ export default function HomeScreen() {
               icon="people-outline"
               title="মোট ভোটার"
               value={totalVoters.toString()}
-              color="success"
+              color="emerald"
             />
           </View>
         </View>

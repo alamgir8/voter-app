@@ -128,18 +128,19 @@ export default function ImportPdfScreen() {
       </View>
 
       <ScrollView
-        className="flex-1 px-5 pt-4"
+        className="flex-1 px-5 pt-4 pb-4"
         showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 100 }}
       >
         {/* Info Card */}
-        <View className="bg-primary-50 rounded-2xl p-4 mb-6 border border-primary-100">
+        <View className="bg-emerald-50 rounded-2xl p-4 mb-6 border border-emerald-100">
           <View className="flex-row items-start">
-            <Ionicons name="information-circle" size={24} color="#1a73e8" />
+            <Ionicons name="information-circle" size={24} color="#10b981" />
             <View className="ml-3 flex-1">
-              <Text className="text-primary-700 font-bold text-sm mb-1">
+              <Text className="text-emerald-700 font-bold text-sm mb-1">
                 PDF ইম্পোর্ট নির্দেশিকা
               </Text>
-              <Text className="text-primary-600 text-xs leading-5">
+              <Text className="text-emerald-600 text-xs leading-5">
                 • বাংলাদেশ নির্বাচন কমিশনের ভোটার তালিকা PDF সাপোর্ট করে{"\n"}•
                 PDF তে নাম, পিতার নাম, ভোটার নং, জন্ম তারিখ, ঠিকানা থাকতে হবে
                 {"\n"}• সর্বোচ্চ ৫০ MB সাইজের PDF আপলোড করা যাবে{"\n"}• আপলোডের
@@ -183,14 +184,14 @@ export default function ImportPdfScreen() {
                     ? `${(selectedFile.size / 1024 / 1024).toFixed(2)} MB`
                     : ""}
                 </Text>
-                <Text className="text-primary-500 text-sm mt-2 font-semibold">
+                <Text className="text-emerald-500 text-sm mt-2 font-semibold">
                   অন্য ফাইল নির্বাচন করতে ট্যাপ করুন
                 </Text>
               </>
             ) : (
               <>
-                <View className="bg-primary-100 w-16 h-16 rounded-full items-center justify-center mb-3">
-                  <Ionicons name="cloud-upload" size={32} color="#1a73e8" />
+                <View className="bg-emerald-100 w-16 h-16 rounded-full items-center justify-center mb-3">
+                  <Ionicons name="cloud-upload" size={32} color="#10b981" />
                 </View>
                 <Text className="text-dark-600 font-bold text-base">
                   PDF ফাইল নির্বাচন করুন
@@ -205,9 +206,9 @@ export default function ImportPdfScreen() {
 
         {/* Upload Progress */}
         {isImporting && (
-          <View className="bg-primary-50 rounded-xl p-4 mb-4 flex-row items-center">
-            <ActivityIndicator size="small" color="#1a73e8" />
-            <Text className="text-primary-600 ml-3 font-medium">
+          <View className="bg-emerald-50 rounded-xl p-4 mb-4 flex-row items-center">
+            <ActivityIndicator size="small" color="#10b981" />
+            <Text className="text-emerald-600 ml-3 font-medium">
               {importProgress?.stage === "ocr"
                 ? `OCR চলছে: পৃষ্ঠা ${importProgress.current}/${importProgress.total}`
                 : uploadProgress || "PDF প্রক্রিয়া হচ্ছে..."}
@@ -222,7 +223,7 @@ export default function ImportPdfScreen() {
           loading={isImporting}
           disabled={!selectedCenter || !selectedFile || isImporting}
           size="lg"
-          className="mb-8"
+          className="mb-4"
           icon={<Ionicons name="cloud-upload" size={22} color="white" />}
         />
       </ScrollView>

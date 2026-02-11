@@ -42,6 +42,8 @@ export default function CenterDetailScreen() {
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [stats, setStats] = useState(null);
   const [page, setPage] = useState(1);
+  const [profileClicks, setProfileClicks] = useState(0);
+  const [canDeleteCenter, setCanDeleteCenter] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -144,6 +146,44 @@ export default function CenterDetailScreen() {
     }
   };
 
+  const handleCenterHeaderClick = () => {
+    const newCount = profileClicks + 1;
+    setProfileClicks(newCount);
+
+    if (newCount === 5) {
+      setCanDeleteCenter(!canDeleteCenter);
+      setProfileClicks(0);
+      Alert.alert(
+        "ডিলিট অপশন",
+        canDeleteCenter
+          ? "ডিলিট অপশন ডিজেবল করা হয়েছে"
+          : "ডিলিট অপশন এনেবল করা হয়েছে",
+      );
+    }
+  };
+
+  const handleDeleteCenter = () => {
+    Alert.alert(
+      "কেন্দ্র মুছুন",
+      `"${selectedCenter.centerName}" মুছে ফেলতে চান?`,
+      [
+        { text: "বাতিল", style: "cancel" },
+        {
+          text: "মুছুন",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              await centerAPI.delete(id);
+              router.back();
+            } catch (error) {
+              Alert.alert("ব্যর্থ", "কেন্দ্র মুছতে পারা যায়নি");
+            }
+          },
+        },
+      ],
+    );
+  };
+
   if (!selectedCenter && isLoading) {
     return <LoadingScreen />;
   }
@@ -159,7 +199,11 @@ export default function CenterDetailScreen() {
           >
             <Ionicons name="arrow-back" size={20} color="#334155" />
           </TouchableOpacity>
-          <View className="flex-1">
+          <TouchableOpacity
+            onPress={handleCenterHeaderClick}
+            className="flex-1"
+            activeOpacity={0.8}
+          >
             <Text className="text-lg font-bold text-dark-800" numberOfLines={1}>
               {selectedCenter?.centerName || "কেন্দ্র"}
             </Text>
@@ -167,19 +211,32 @@ export default function CenterDetailScreen() {
               {selectedCenter?.division} › {selectedCenter?.zilla} ›{" "}
               {selectedCenter?.upazila}
             </Text>
-          </View>
+            {canDeleteCenter && (
+              <Text className="text-red-500 text-xs mt-1 font-semibold">
+                ডিলিট অপশন সক্রিয়
+              </Text>
+            )}
+          </TouchableOpacity>
           <TouchableOpacity
             onPress={handleExportCenterPdf}
-            className="bg-primary-50 w-9 h-9 rounded-xl items-center justify-center mr-2"
+            className="bg-emerald-50 w-9 h-9 rounded-xl items-center justify-center mr-2"
           >
-            <Ionicons name="download-outline" size={20} color="#1a73e8" />
+            <Ionicons name="download-outline" size={20} color="#10b981" />
           </TouchableOpacity>
           <TouchableOpacity
             onPress={() => router.push(`/center/edit/${id}`)}
-            className="bg-primary-50 w-9 h-9 rounded-xl items-center justify-center"
+            className="bg-emerald-50 w-9 h-9 rounded-xl items-center justify-center mr-2"
           >
-            <Ionicons name="create-outline" size={20} color="#1a73e8" />
+            <Ionicons name="create-outline" size={20} color="#10b981" />
           </TouchableOpacity>
+          {canDeleteCenter && (
+            <TouchableOpacity
+              onPress={handleDeleteCenter}
+              className="bg-red-50 w-9 h-9 rounded-xl items-center justify-center"
+            >
+              <Ionicons name="trash-outline" size={20} color="#ef4444" />
+            </TouchableOpacity>
+          )}
         </View>
 
         {/* Stats */}
@@ -189,13 +246,13 @@ export default function CenterDetailScreen() {
               icon="people"
               title="মোট"
               value={stats.totalVoters?.toString() || "0"}
-              color="primary"
+              color="emerald"
             />
             <StatCard
               icon="man"
               title="পুরুষ"
               value={stats.maleVoters?.toString() || "0"}
-              color="success"
+              color="emerald"
             />
             <StatCard
               icon="woman"
@@ -208,7 +265,7 @@ export default function CenterDetailScreen() {
       </View>
 
       {/* Action Buttons */}
-      <View className="flex-row px-4 py-3 gap-2">
+      <View className="flex-row px-4 py-3 gap-2 bg-white border-b border-dark-100">
         <TouchableOpacity
           onPress={() =>
             router.push({
@@ -216,7 +273,7 @@ export default function CenterDetailScreen() {
               params: { centerId: id },
             })
           }
-          className="flex-1 bg-primary-500 rounded-xl py-2.5 flex-row items-center justify-center"
+          className="flex-1 bg-blue-500 rounded-xl py-2.5 flex-row items-center justify-center"
           activeOpacity={0.8}
         >
           <Ionicons name="person-add" size={18} color="white" />
@@ -248,7 +305,7 @@ export default function CenterDetailScreen() {
         renderItem={({ item, index }) => (
           <VoterCard voter={item} onPress={handleVoterPress} index={index} />
         )}
-        contentContainerStyle={{ paddingHorizontal: 12, paddingBottom: 100 }}
+        contentContainerStyle={{ paddingHorizontal: 12, paddingBottom: 140 }}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
@@ -273,6 +330,7 @@ export default function CenterDetailScreen() {
           setSelectedVoter(null);
         }}
         onExportPdf={handleExportPdf}
+        onDeleteVoter={handleDeleteVoter}
       />
     </SafeAreaView>
   );

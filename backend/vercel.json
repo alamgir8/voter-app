@@ -1,0 +1,27 @@
+{
+  "version": 2,
+  "buildCommand": "npm install",
+  "env": {
+    "MONGODB_URI": "@mongodb_uri",
+    "JWT_SECRET": "@jwt_secret",
+    "TESSERACT_CORE_PATH": "@tesseract_core_path"
+  },
+  "rewrites": [{ "source": "/api/(.*)", "destination": "/src/server.js" }],
+  "functions": {
+    "src/server.js": {
+      "memory": 3008,
+      "maxDuration": 60
+    }
+  },
+  "headers": [
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-cache, no-store, must-revalidate"
+        }
+      ]
+    }
+  ]
+}

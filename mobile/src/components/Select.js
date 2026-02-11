@@ -25,16 +25,16 @@ export const Select = ({
     : "";
 
   return (
-    <View className={`mb-4 ${className}`}>
+    <View className={`${className}`}>
       {label && (
-        <Text className="text-dark-700 text-sm font-medium mb-1.5">
+        <Text className="text-dark-700 text-sm font-medium mb-2">
           {label}
           {required && <Text className="text-danger"> *</Text>}
         </Text>
       )}
       <TouchableOpacity
         onPress={() => setVisible(true)}
-        className={`flex-row items-center justify-between bg-dark-50 rounded-xl border-2 px-3 py-3.5 ${
+        className={`flex-row items-center justify-between bg-white rounded-xl border-2 px-4 py-3 ${
           error ? "border-danger" : "border-dark-200"
         }`}
         activeOpacity={0.7}

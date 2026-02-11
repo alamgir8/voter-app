@@ -84,7 +84,7 @@ export default function ProfileScreen() {
     <SafeAreaView className="flex-1 bg-dark-50">
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
         {/* Header */}
-        <View className="bg-primary-500 px-5 pt-4 pb-10 rounded-b-3xl">
+        <View className="bg-blue-500 px-5 pt-4 pb-10 rounded-b-3xl">
           <Text className="text-white text-xl font-bold mb-6">প্রোফাইল</Text>
 
           <View className="items-center">
@@ -112,9 +112,9 @@ export default function ProfileScreen() {
               </Text>
               <TouchableOpacity
                 onPress={() => setIsEditing(!isEditing)}
-                className="bg-primary-50 px-3 py-1.5 rounded-lg"
+                className="bg-emerald-100 px-3 py-1.5 rounded-lg"
               >
-                <Text className="text-primary-500 text-sm font-semibold">
+                <Text className="text-emerald-600 text-sm font-semibold">
                   {isEditing ? "বাতিল" : "সম্পাদনা"}
                 </Text>
               </TouchableOpacity>

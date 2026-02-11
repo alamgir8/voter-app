@@ -51,14 +51,16 @@ export const StatCard = ({ icon, title, value, color = "primary" }) => {
   const colors = {
     primary: "bg-primary-50 text-primary-500",
     success: "bg-emerald-50 text-emerald-500",
+    emerald: "bg-emerald-50 text-emerald-500",
     warning: "bg-amber-50 text-amber-500",
     danger: "bg-red-50 text-red-500",
     purple: "bg-purple-50 text-purple-500",
   };
 
   const iconColors = {
-    primary: "#1a73e8",
+    primary: "#10b981",
     success: "#10b981",
+    emerald: "#10b981",
     warning: "#f59e0b",
     danger: "#ef4444",
     purple: "#8b5cf6",

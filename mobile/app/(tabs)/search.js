@@ -167,7 +167,7 @@ export default function SearchScreen() {
           )}
           <TouchableOpacity
             onPress={handleSearch}
-            className="bg-primary-500 rounded-r-xl px-4 py-3"
+            className="bg-blue-500 rounded-r-xl px-4 py-3"
           >
             <Ionicons name="search" size={20} color="white" />
           </TouchableOpacity>
@@ -188,7 +188,7 @@ export default function SearchScreen() {
             onPress={() => setShowAdvanced(!showAdvanced)}
             className={`px-3 py-3 rounded-xl border-2 ${
               showAdvanced
-                ? "bg-primary-500 border-primary-500"
+                ? "bg-blue-500 border-emerald-500"
                 : "border-dark-200 bg-dark-50"
             }`}
           >
@@ -268,7 +268,7 @@ export default function SearchScreen() {
             </View>
             <TouchableOpacity
               onPress={handleSearch}
-              className="bg-primary-500 rounded-xl py-2.5 items-center mt-1"
+              className="bg-blue-500 rounded-xl py-2.5 items-center mt-1"
             >
               <Text className="text-white font-semibold">সার্চ করুন</Text>
             </TouchableOpacity>
@@ -280,7 +280,7 @@ export default function SearchScreen() {
       <View className="flex-1 px-4 pt-3">
         {isSearching && (
           <View className="items-center py-4">
-            <ActivityIndicator size="small" color="#1a73e8" />
+            <ActivityIndicator size="small" color="#10b981" />
             <Text className="text-dark-400 text-sm mt-2">খুঁজছি...</Text>
           </View>
         )}
@@ -317,7 +317,7 @@ export default function SearchScreen() {
             ) : null
           }
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ paddingBottom: 100 }}
+          contentContainerStyle={{ paddingBottom: 20 }}
         />
       </View>
 
@@ -330,6 +330,7 @@ export default function SearchScreen() {
           setSelectedVoter(null);
         }}
         onExportPdf={handleExportPdf}
+        onDeleteVoter={() => {}}
       />
     </SafeAreaView>
   );
