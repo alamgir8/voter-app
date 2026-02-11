@@ -87,15 +87,28 @@ export default function ImportPdfScreen() {
     setUploadProgress("");
 
     if (result.success) {
+      const autoSavedMsg = result.data.autoSaved
+        ? `${result.data.totalSaved} জন ভোটার স্বয়ংক্রিয়ভাবে সংরক্ষিত হয়েছে`
+        : `${result.data.totalExtracted} জন ভোটার পাওয়া গেছে`;
+
       Toast.show({
         type: "success",
-        text1: "PDF প্রক্রিয়া সফল",
-        text2: `${result.data.totalExtracted} জন ভোটার পাওয়া গেছে`,
+        text1: "PDF প্রক্রিয়া সফল ✓",
+        text2: autoSavedMsg,
       });
-      router.push({
-        pathname: "/import/preview",
-        params: { centerId: selectedCenter },
-      });
+
+      // If auto-saved, go to center detail; otherwise show preview
+      if (result.data.autoSaved) {
+        router.push({
+          pathname: "/center/[id]",
+          params: { id: selectedCenter },
+        });
+      } else {
+        router.push({
+          pathname: "/import/preview",
+          params: { centerId: selectedCenter },
+        });
+      }
     } else {
       Alert.alert(
         "সমস্যা",
@@ -211,7 +224,9 @@ export default function ImportPdfScreen() {
             <Text className="text-emerald-600 ml-3 font-medium">
               {importProgress?.stage === "ocr"
                 ? `OCR চলছে: পৃষ্ঠা ${importProgress.current}/${importProgress.total}`
-                : uploadProgress || "PDF প্রক্রিয়া হচ্ছে..."}
+                : importProgress?.stage === "saving"
+                  ? `ডাটাবেসে সংরক্ষণ: ${importProgress.current}/${importProgress.total}`
+                  : uploadProgress || "PDF প্রক্রিয়া হচ্ছে..."}
             </Text>
           </View>
         )}

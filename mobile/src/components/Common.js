@@ -47,9 +47,9 @@ export const ErrorState = ({ message, onRetry }) => (
   </View>
 );
 
-export const StatCard = ({ icon, title, value, color = "primary" }) => {
+export const StatCard = ({ icon, title, value, color = "emerald" }) => {
   const colors = {
-    primary: "bg-primary-50 text-primary-500",
+    primary: "bg-emerald-50 text-emerald-500",
     success: "bg-emerald-50 text-emerald-500",
     emerald: "bg-emerald-50 text-emerald-500",
     warning: "bg-amber-50 text-amber-500",

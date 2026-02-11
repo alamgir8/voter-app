@@ -576,13 +576,39 @@ const importPdf = async (req, res) => {
           return;
         }
 
+        // Auto-save voters to database
+        updateImportJob(job.id, {
+          progress: {
+            stage: "saving",
+            current: 0,
+            total: result.voters.length,
+          },
+        });
+
+        const votersToSave = result.voters.map((voter, index) => ({
+          ...voter,
+          center: centerId,
+          createdBy: req.user._id,
+        }));
+
+        const savedVoters = await Voter.insertMany(votersToSave);
+
+        // Update center total voters count
+        await Center.findByIdAndUpdate(
+          centerId,
+          { $inc: { totalVoters: savedVoters.length } },
+          { new: true },
+        );
+
         updateImportJob(job.id, {
           status: "done",
           result: {
             voters: result.voters,
             totalPages: result.pages,
             totalExtracted: result.voters.length,
+            totalSaved: savedVoters.length,
             method: result.method,
+            autoSaved: true,
           },
         });
       } catch (err) {
@@ -591,9 +617,15 @@ const importPdf = async (req, res) => {
           error: err.message || "PDF ইম্পোর্ট ব্যর্থ",
         });
       } finally {
+        // Delete PDF file immediately after processing
         try {
-          fs.unlinkSync(req.file.path);
-        } catch (e) {}
+          if (req.file && fs.existsSync(req.file.path)) {
+            fs.unlinkSync(req.file.path);
+            console.log(`[PDF] Deleted: ${req.file.path}`);
+          }
+        } catch (e) {
+          console.error("Error deleting PDF:", e);
+        }
       }
     })();
   } catch (error) {
