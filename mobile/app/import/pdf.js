@@ -21,8 +21,14 @@ export default function ImportPdfScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
   const { centers, fetchCenters } = useCenterStore();
-  const { importPdf, importedVoters, isImporting, clearImported } =
-    useVoterStore();
+  const {
+    importPdf,
+    importedVoters,
+    isImporting,
+    importProgress,
+    clearImported,
+    clearImportProgress,
+  } = useVoterStore();
 
   const [selectedCenter, setSelectedCenter] = useState(params.centerId || "");
   const [selectedFile, setSelectedFile] = useState(null);
@@ -30,7 +36,10 @@ export default function ImportPdfScreen() {
 
   useEffect(() => {
     fetchCenters();
-    return () => clearImported();
+    return () => {
+      clearImported();
+      clearImportProgress();
+    };
   }, []);
 
   const handlePickFile = async () => {
@@ -199,7 +208,9 @@ export default function ImportPdfScreen() {
           <View className="bg-primary-50 rounded-xl p-4 mb-4 flex-row items-center">
             <ActivityIndicator size="small" color="#1a73e8" />
             <Text className="text-primary-600 ml-3 font-medium">
-              {uploadProgress || "PDF প্রক্রিয়া হচ্ছে..."}
+              {importProgress?.stage === "ocr"
+                ? `OCR চলছে: পৃষ্ঠা ${importProgress.current}/${importProgress.total}`
+                : uploadProgress || "PDF প্রক্রিয়া হচ্ছে..."}
             </Text>
           </View>
         )}

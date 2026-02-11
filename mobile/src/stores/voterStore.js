@@ -153,8 +153,32 @@ const useVoterStore = create((set, get) => ({
   importPdf: async (formData) => {
     set({ isImporting: true, importProgress: null, error: null });
     try {
-      const response = await importAPI.uploadPdf(formData);
-      const jobId = response.data.jobId;
+      let jobId;
+
+      // Try to upload, handle 409 conflict
+      try {
+        console.log("[voterStore] Uploading PDF...");
+        const response = await importAPI.uploadPdf(formData);
+        jobId = response.data.jobId;
+        console.log("[voterStore] Job created, jobId:", jobId);
+      } catch (uploadError) {
+        // If 409 conflict, the import is already in progress
+        if (uploadError.response?.status === 409) {
+          console.log("[voterStore] 409 Conflict - import already in progress");
+          jobId = uploadError.response.data.jobId;
+          if (!jobId) {
+            set({ isImporting: false });
+            return {
+              success: false,
+              message:
+                uploadError.response.data.message || "ইম্পোর্ট ইতিমধ্যে চলছে",
+            };
+          }
+          console.log("[voterStore] Resuming with existing jobId:", jobId);
+        } else {
+          throw uploadError;
+        }
+      }
 
       if (!jobId) {
         set({ isImporting: false });
@@ -165,31 +189,48 @@ const useVoterStore = create((set, get) => ({
       }
 
       const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-      const timeoutAt = Date.now() + 20 * 60 * 1000;
+      const timeoutAt = Date.now() + 30 * 60 * 1000;
+      let errorCount = 0;
 
+      console.log("[voterStore] Starting status polling loop...");
       while (Date.now() < timeoutAt) {
-        const statusRes = await importAPI.getStatus(jobId);
-        const status = statusRes.data.status;
-        const progress = statusRes.data.progress;
-        if (progress) set({ importProgress: progress });
+        try {
+          console.log("[voterStore] Polling status for jobId:", jobId);
+          const statusRes = await importAPI.getStatus(jobId);
+          const status = statusRes.data.status;
+          const progress = statusRes.data.progress;
+          console.log("[voterStore] Status:", status, "Progress:", progress);
+          if (progress) set({ importProgress: progress });
+          errorCount = 0;
 
-        if (status === "done") {
-          set({
-            importedVoters: statusRes.data.data.voters,
-            isImporting: false,
-          });
-          return { success: true, data: statusRes.data.data };
+          if (status === "done") {
+            set({
+              importedVoters: statusRes.data.data.voters,
+              isImporting: false,
+            });
+            return { success: true, data: statusRes.data.data };
+          }
+
+          if (status === "failed") {
+            set({ isImporting: false });
+            return {
+              success: false,
+              message: statusRes.data.error || "PDF ইম্পোর্ট ব্যর্থ",
+            };
+          }
+        } catch (pollError) {
+          errorCount += 1;
+          if (errorCount >= 5) {
+            set({ isImporting: false });
+            return {
+              success: false,
+              message:
+                "সার্ভারে সংযোগ সমস্যা হচ্ছে, দয়া করে পরে আবার চেষ্টা করুন",
+            };
+          }
         }
 
-        if (status === "failed") {
-          set({ isImporting: false });
-          return {
-            success: false,
-            message: statusRes.data.error || "PDF ইম্পোর্ট ব্যর্থ",
-          };
-        }
-
-        await sleep(4000);
+        await sleep(5000);
       }
 
       set({ isImporting: false });
