@@ -1,0 +1,10 @@
+{
+  "name": "search-import",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "backend": "cd backend && npm start",
+    "mobile": "cd mobile && npx expo start",
+    "mobile:clear": "cd mobile && npx expo start --clear"
+  }
+}
