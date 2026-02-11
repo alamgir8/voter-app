@@ -16,31 +16,26 @@ import { StatCard } from "../../src/components/Common";
 export default function HomeScreen() {
   const router = useRouter();
   const { user } = useAuthStore();
-  const { centers, fetchCenters, isLoading } = useCenterStore();
+  const { centers = [], fetchCenters, isLoading } = useCenterStore();
   const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
-    console.log("Home screen mounted");
     fetchCenters();
-  }, []);
+  }, [fetchCenters]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     await fetchCenters();
     setRefreshing(false);
-  }, []);
+  }, [fetchCenters]);
 
-  const totalVoters = centers.reduce((sum, c) => sum + (c.totalVoters || 0), 0);
-
-  console.log("Rendering home screen, centers:", centers.length);
+  const totalVoters = centers.reduce(
+    (sum, c) => sum + (c?.totalVoters || 0),
+    0,
+  );
 
   return (
-    <SafeAreaView className="flex-1" style={{ backgroundColor: "#f8f9fa" }}>
-      <View style={{ backgroundColor: "red", padding: 20 }}>
-        <Text style={{ color: "white", fontSize: 24 }}>
-          TEST - Home Screen Loaded!
-        </Text>
-      </View>
+    <SafeAreaView className="flex-1 bg-dark-50">
       <ScrollView
         className="flex-1"
         refreshControl={
@@ -101,6 +96,7 @@ export default function HomeScreen() {
           <Text className="text-dark-800 text-lg font-bold mb-3">
             দ্রুত কার্যক্রম
           </Text>
+
           <View className="flex-row flex-wrap gap-3">
             <TouchableOpacity
               onPress={() => router.push("/center/create")}
@@ -207,6 +203,7 @@ export default function HomeScreen() {
                 <View className="bg-primary-100 w-11 h-11 rounded-xl items-center justify-center mr-3">
                   <Ionicons name="business" size={22} color="#1a73e8" />
                 </View>
+
                 <View className="flex-1">
                   <Text
                     className="text-dark-800 font-bold text-sm"
@@ -218,6 +215,7 @@ export default function HomeScreen() {
                     {center.division} › {center.zilla} › {center.upazila}
                   </Text>
                 </View>
+
                 <View className="items-end">
                   <Text className="text-primary-500 font-bold text-sm">
                     {center.totalVoters || 0}

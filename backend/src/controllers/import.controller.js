@@ -5,6 +5,32 @@ const sharp = require("sharp");
 const Voter = require("../models/Voter");
 const Center = require("../models/Center");
 
+const importJobs = new Map();
+
+function createImportJob({ userId, centerId }) {
+  const jobId = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  const job = {
+    id: jobId,
+    userId,
+    centerId,
+    status: "processing",
+    progress: { stage: "starting", current: 0, total: 0 },
+    result: null,
+    error: null,
+    startedAt: Date.now(),
+  };
+  importJobs.set(jobId, job);
+  return job;
+}
+
+function updateImportJob(jobId, updates) {
+  const job = importJobs.get(jobId);
+  if (!job) return null;
+  Object.assign(job, updates);
+  importJobs.set(jobId, job);
+  return job;
+}
+
 /* ── Bengali digit → English ─────────────────────────── */
 const BN = "\u09E6\u09E7\u09E8\u09E9\u09EA\u09EB\u09EC\u09ED\u09EE\u09EF";
 const bnToEn = (s) =>
@@ -339,7 +365,7 @@ function postCleanVoters(voters) {
  * Strategy 2: Dual OCR – PSM 1 (auto layout) + column-split (PSM 6)
  *             Results are merged for maximum extraction.
  */
-const extractVotersFromPdf = async (filePath) => {
+const extractVotersFromPdf = async (filePath, onProgress) => {
   // --- Attempt 1: pdf-parse for text-based PDFs ---
   try {
     const pdfParse = require("pdf-parse");
@@ -350,6 +376,9 @@ const extractVotersFromPdf = async (filePath) => {
     if (bc > 100) {
       const r = parseVoters(pdfData.text, "");
       if (r.voters.length > 0) {
+        if (onProgress) {
+          onProgress({ stage: "text", current: 1, total: 1, page: 1 });
+        }
         return {
           voters: r.voters,
           method: "text-extraction",
@@ -418,6 +447,14 @@ const extractVotersFromPdf = async (filePath) => {
       console.log(
         `[OCR] ${pages[pi]}: PSM1=${r1.voters.length} COLS=${r2.voters.length} -> ${merged.length}`,
       );
+      if (onProgress) {
+        onProgress({
+          stage: "ocr",
+          current: pi - startIdx + 1,
+          total: pages.length - startIdx,
+          page: pages[pi],
+        });
+      }
     }
 
     // Global dedup by serial number
@@ -494,31 +531,71 @@ const importPdf = async (req, res) => {
       });
     }
 
-    // Extract voters (auto-detects text vs scanned PDF)
-    const result = await extractVotersFromPdf(req.file.path);
-
-    // Clean up uploaded file
-    fs.unlinkSync(req.file.path);
-
-    if (result.voters.length === 0) {
-      return res.status(400).json({
-        success: false,
-        message:
-          "PDF থেকে কোনো ভোটার তথ্য বের করা যায়নি। PDF ফরম্যাট চেক করুন।",
-        rawText: result.rawTextPreview || "",
-      });
+    // Prevent duplicate imports per center
+    for (const job of importJobs.values()) {
+      if (
+        job.centerId === centerId &&
+        job.userId.toString() === req.user._id.toString() &&
+        job.status === "processing"
+      ) {
+        fs.unlinkSync(req.file.path);
+        return res.status(409).json({
+          success: false,
+          message: "এই কেন্দ্রের জন্য ইম্পোর্ট চলছে, দয়া করে অপেক্ষা করুন",
+          jobId: job.id,
+        });
+      }
     }
 
-    res.json({
-      success: true,
-      message: `${result.voters.length} জন ভোটারের তথ্য PDF থেকে বের করা হয়েছে (${result.method})`,
-      data: {
-        voters: result.voters,
-        totalPages: result.pages,
-        totalExtracted: result.voters.length,
-        method: result.method,
-      },
+    const job = createImportJob({
+      userId: req.user._id.toString(),
+      centerId,
     });
+
+    res.status(202).json({
+      success: true,
+      message: "PDF প্রক্রিয়া শুরু হয়েছে",
+      jobId: job.id,
+    });
+
+    (async () => {
+      try {
+        updateImportJob(job.id, {
+          progress: { stage: "ocr", current: 0, total: 0 },
+        });
+        const result = await extractVotersFromPdf(req.file.path, (progress) => {
+          updateImportJob(job.id, { progress });
+        });
+
+        if (result.voters.length === 0) {
+          updateImportJob(job.id, {
+            status: "failed",
+            error:
+              "PDF থেকে কোনো ভোটার তথ্য বের করা যায়নি। PDF ফরম্যাট চেক করুন।",
+          });
+          return;
+        }
+
+        updateImportJob(job.id, {
+          status: "done",
+          result: {
+            voters: result.voters,
+            totalPages: result.pages,
+            totalExtracted: result.voters.length,
+            method: result.method,
+          },
+        });
+      } catch (err) {
+        updateImportJob(job.id, {
+          status: "failed",
+          error: err.message || "PDF ইম্পোর্ট ব্যর্থ",
+        });
+      } finally {
+        try {
+          fs.unlinkSync(req.file.path);
+        } catch (e) {}
+      }
+    })();
   } catch (error) {
     // Clean up file on error
     if (req.file && fs.existsSync(req.file.path)) {
@@ -529,6 +606,26 @@ const importPdf = async (req, res) => {
       message: "PDF প্রক্রিয়াকরণ ব্যর্থ: " + error.message,
     });
   }
+};
+
+// @desc    Get import job status
+// @route   GET /api/import/status/:jobId
+const getImportStatus = async (req, res) => {
+  const job = importJobs.get(req.params.jobId);
+  if (!job || job.userId.toString() !== req.user._id.toString()) {
+    return res.status(404).json({
+      success: false,
+      message: "ইম্পোর্ট স্ট্যাটাস পাওয়া যায়নি",
+    });
+  }
+
+  return res.json({
+    success: true,
+    status: job.status,
+    progress: job.progress,
+    error: job.error,
+    data: job.status === "done" ? job.result : null,
+  });
 };
 
 // @desc    Save imported voters from PDF
@@ -662,6 +759,7 @@ const importManual = async (req, res) => {
 
 module.exports = {
   importPdf,
+  getImportStatus,
   saveImportedVoters,
   importManual,
 };

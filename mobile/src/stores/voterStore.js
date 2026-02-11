@@ -10,6 +10,7 @@ const useVoterStore = create((set, get) => ({
   isLoading: false,
   isSearching: false,
   isImporting: false,
+  importProgress: null,
   error: null,
   pagination: null,
   searchPagination: null,
@@ -150,14 +151,52 @@ const useVoterStore = create((set, get) => ({
 
   // Import PDF
   importPdf: async (formData) => {
-    set({ isImporting: true, error: null });
+    set({ isImporting: true, importProgress: null, error: null });
     try {
       const response = await importAPI.uploadPdf(formData);
-      set({
-        importedVoters: response.data.data.voters,
-        isImporting: false,
-      });
-      return { success: true, data: response.data.data };
+      const jobId = response.data.jobId;
+
+      if (!jobId) {
+        set({ isImporting: false });
+        return {
+          success: false,
+          message: "ইম্পোর্ট জব আইডি পাওয়া যায়নি",
+        };
+      }
+
+      const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+      const timeoutAt = Date.now() + 20 * 60 * 1000;
+
+      while (Date.now() < timeoutAt) {
+        const statusRes = await importAPI.getStatus(jobId);
+        const status = statusRes.data.status;
+        const progress = statusRes.data.progress;
+        if (progress) set({ importProgress: progress });
+
+        if (status === "done") {
+          set({
+            importedVoters: statusRes.data.data.voters,
+            isImporting: false,
+          });
+          return { success: true, data: statusRes.data.data };
+        }
+
+        if (status === "failed") {
+          set({ isImporting: false });
+          return {
+            success: false,
+            message: statusRes.data.error || "PDF ইম্পোর্ট ব্যর্থ",
+          };
+        }
+
+        await sleep(4000);
+      }
+
+      set({ isImporting: false });
+      return {
+        success: false,
+        message: "ইম্পোর্ট বেশি সময় নিচ্ছে, দয়া করে পরে আবার চেষ্টা করুন",
+      };
     } catch (error) {
       set({ isImporting: false });
       return {
@@ -220,6 +259,7 @@ const useVoterStore = create((set, get) => ({
   clearSearch: () =>
     set({ searchResults: [], autoResults: [], searchPagination: null }),
   clearImported: () => set({ importedVoters: [] }),
+  clearImportProgress: () => set({ importProgress: null }),
   clearError: () => set({ error: null }),
 }));
 

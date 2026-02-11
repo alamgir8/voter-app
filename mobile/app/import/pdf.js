@@ -50,6 +50,7 @@ export default function ImportPdfScreen() {
   };
 
   const handleUpload = async () => {
+    if (isImporting) return;
     if (!selectedCenter) {
       Alert.alert("সতর্কতা", "প্রথমে কেন্দ্র নির্বাচন করুন");
       return;
@@ -60,7 +61,9 @@ export default function ImportPdfScreen() {
       return;
     }
 
-    setUploadProgress("PDF আপলোড হচ্ছে...");
+    setUploadProgress(
+      "PDF আপলোড হচ্ছে... (৪২ পৃষ্ঠা হলে ৮-১২ মিনিট লাগতে পারে)",
+    );
 
     const formData = new FormData();
     formData.append("pdf", {
@@ -206,7 +209,7 @@ export default function ImportPdfScreen() {
           title="PDF আপলোড ও প্রক্রিয়া করুন"
           onPress={handleUpload}
           loading={isImporting}
-          disabled={!selectedCenter || !selectedFile}
+          disabled={!selectedCenter || !selectedFile || isImporting}
           size="lg"
           className="mb-8"
           icon={<Ionicons name="cloud-upload" size={22} color="white" />}

@@ -1,6 +1,6 @@
 import "../global.css";
-import React, { useEffect, useCallback } from "react";
-import { Stack, useRouter, useSegments } from "expo-router";
+import React, { useEffect } from "react";
+import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import Toast from "react-native-toast-message";
 import { useFonts } from "expo-font";
@@ -9,11 +9,12 @@ import useAuthStore from "../src/stores/authStore";
 
 SplashScreen.preventAutoHideAsync();
 
+export const unstable_settings = {
+  initialRouteName: "(tabs)",
+};
+
 export default function RootLayout() {
   const initialize = useAuthStore((s) => s.initialize);
-  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
-  const router = useRouter();
-  const segments = useSegments();
 
   const [fontsLoaded, fontError] = useFonts({
     "NotoSansBengali-Thin": require("../assets/fonts/NotoSansBengali-Thin.ttf"),
@@ -32,27 +33,12 @@ export default function RootLayout() {
   }, []);
 
   useEffect(() => {
-    if (!fontsLoaded && !fontError) return;
-    if (!segments || segments.length === 0) return;
-    const inAuthGroup = segments[0] === "(auth)";
-    const inTabsGroup = segments[0] === "(tabs)";
-    console.log("Route guard:", {
-      segments,
-      isAuthenticated,
-      inAuthGroup,
-      inTabsGroup,
-    });
-    if (!isAuthenticated && !inAuthGroup) {
-      router.replace("/(auth)/login");
-    } else if (isAuthenticated && !inTabsGroup) {
-      router.replace("/(tabs)/home");
-    }
-  }, [fontsLoaded, fontError, isAuthenticated, segments, router]);
-
-  const onLayoutRootView = useCallback(async () => {
-    if (fontsLoaded || fontError) {
-      await SplashScreen.hideAsync();
-    }
+    const hide = async () => {
+      if (fontsLoaded || fontError) {
+        await SplashScreen.hideAsync();
+      }
+    };
+    hide();
   }, [fontsLoaded, fontError]);
 
   useEffect(() => {
@@ -72,7 +58,6 @@ export default function RootLayout() {
           contentStyle: { backgroundColor: "#ffffff" },
           animation: "slide_from_right",
         }}
-        onLayout={onLayoutRootView}
       >
         <Stack.Screen name="index" />
         <Stack.Screen name="(auth)" options={{ headerShown: false }} />

@@ -7,6 +7,7 @@ const useAuthStore = create((set, get) => ({
   token: null,
   isLoading: false,
   isAuthenticated: false,
+  isInitialized: false,
   error: null,
 
   // Initialize auth state from storage
@@ -17,10 +18,13 @@ const useAuthStore = create((set, get) => ({
 
       if (token && userStr) {
         const user = JSON.parse(userStr);
-        set({ user, token, isAuthenticated: true });
+        set({ user, token, isAuthenticated: true, isInitialized: true });
+      } else {
+        set({ isInitialized: true });
       }
     } catch (e) {
       console.log("Auth init error:", e);
+      set({ isInitialized: true });
     }
   },
 
@@ -38,6 +42,7 @@ const useAuthStore = create((set, get) => ({
         user: data,
         token: data.token,
         isAuthenticated: true,
+        isInitialized: true,
         isLoading: false,
         error: null,
       });
@@ -64,6 +69,7 @@ const useAuthStore = create((set, get) => ({
         user: data,
         token: data.token,
         isAuthenticated: true,
+        isInitialized: true,
         isLoading: false,
         error: null,
       });
@@ -89,6 +95,7 @@ const useAuthStore = create((set, get) => ({
       user: null,
       token: null,
       isAuthenticated: false,
+      isInitialized: true,
       error: null,
     });
   },

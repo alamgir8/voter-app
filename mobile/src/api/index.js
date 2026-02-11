@@ -82,8 +82,9 @@ export const importAPI = {
   uploadPdf: (formData) =>
     api.post("/import/pdf", formData, {
       headers: { "Content-Type": "multipart/form-data" },
-      timeout: 120000,
+      timeout: 600000,
     }),
+  getStatus: (jobId) => api.get(`/import/status/${jobId}`),
   saveImported: (data) => api.post("/import/save", data),
   importManual: (data) => api.post("/import/manual", data),
 };
